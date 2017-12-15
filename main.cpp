@@ -19,7 +19,7 @@ public:
     };
 
     I2CDev(const DeviceSpec& dev) {
-        file = open("/dev/i2c-2", O_RDWR);
+        file = open("/dev/i2c-1", O_RDWR);
 
         if (file < 0)
             throw exception("Unable to open bus");
