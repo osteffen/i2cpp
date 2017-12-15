@@ -21,7 +21,7 @@ public:
         file = open("/dev/i2c-2", O_RDWR);
 
         if (file < 0)
-            throw exception("Unable to open device");
+            throw exception("Unable to open bus");
 
         const auto res = ioctl(file, I2C_SLAVE, dev.dev);
         if (res < 0)
@@ -85,18 +85,45 @@ protected:
 #define Rw  0b00000010
 #define Rs  0b00000001
 
+class Display : protected I2CDev {
+    public:
+    using I2CDev::I2CDev;
+
+    void write(const char data, const char mode=0) {
+        write4bit(mode | (data & 0xF0));
+        write4bit(mode | ((data << 4) & 0xF0));
+    }
+
+    void write4bit(const char data) {
+        I2CDev::write(data | En | LCD_BACKLIGHT);
+        strobe(data);
+    }
+    void strobe(const char data) {
+        I2CDev::write(data | En | LCD_BACKLIGHT);
+        I2CDev::write(((data & ~En) | LCD_BACKLIGHT));
+    }
+
+    void Init() {
+        write(0x03);
+        write(0x03);
+        write(0x03);
+        write(0x02);
+
+        write(LCD_FUNCTIONSET | LCD_2LINE | LCD_5x8DOTS | LCD_4BITMODE);
+        write(LCD_DISPLAYCONTROL | LCD_DISPLAYON);
+        write(LCD_CLEARDISPLAY);
+        write(LCD_ENTRYMODESET | LCD_ENTRYLEFT);
+    }
+
+    void setBacklight(const bool state) {
+        write(state ? LCD_BACKLIGHT : LCD_NOBACKLIGHT);
+    }
+};
+
 int main()
 {
-    I2CDev display({2,0x27});
-    display.write(0x03);
-    display.write(0x03);
-    display.write(0x03);
-    display.write(0x02);
-
-    display.write(LCD_FUNCTIONSET | LCD_2LINE | LCD_5x8DOTS | LCD_4BITMODE);
-    display.write(LCD_DISPLAYCONTROL | LCD_DISPLAYON);
-    display.write(LCD_CLEARDISPLAY);
-    display.write(LCD_ENTRYMODESET | LCD_ENTRYLEFT);
+    Display display({1,0x27});
+    display.setBacklight(true);
 
     return 0;
 }
