@@ -5,6 +5,7 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <stdexcept>
+#include <string>
 
 class I2CDev {
 public:
@@ -117,6 +118,26 @@ class Display : protected I2CDev {
 
     void setBacklight(const bool state) {
         write(state ? LCD_BACKLIGHT : LCD_NOBACKLIGHT);
+    }
+
+    void clear() {
+        write(LCD_CLEARDISPLAY);
+        write(LCD_RETURNHOME);
+    }
+
+    void display_string(const std::string& text, const int line) {
+        if(line == 1)
+           write(0x80);
+        if(line == 2)
+           write(0xC0);
+        if(line == 3)
+           write(0x94);
+        if(line == 4)
+           write(0xD4);
+
+        for(const char& c : text)
+           write(c, Rs);
+
     }
 };
 
