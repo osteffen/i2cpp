@@ -82,9 +82,9 @@ protected:
 #define LCD_BACKLIGHT  0x08
 #define LCD_NOBACKLIGHT  0x00
 
-#define En  0b00000100
-#define Rw  0b00000010
-#define Rs  0b00000001
+#define En  4
+#define Rw  2
+#define Rs  1
 
 class Display : protected I2CDev {
     public:
