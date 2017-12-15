@@ -145,6 +145,7 @@ int main()
 {
     Display display({1,0x27});
     display.setBacklight(true);
+    display.display_string("hi!", 1);
 
     return 0;
 }
