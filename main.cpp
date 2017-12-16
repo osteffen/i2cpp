@@ -96,10 +96,11 @@ protected:
 #define Rw  2
 #define Rs  1
 
-class Display : protected I2CDev {
+class Display {
     public:
+    I2CDev dev;
 
-    Display(const I2CDev::DeviceSpec& s):I2CDev(s) {
+    Display(const I2CDev::DeviceSpec& s):dev(s) {
         Init();
     }
 
@@ -109,14 +110,14 @@ class Display : protected I2CDev {
     }
 
     void write4bit(const char data) {
-        I2CDev::write(data | LCD_BACKLIGHT);
+        dev.write(data | LCD_BACKLIGHT);
         strobe(data);
     }
 
     void strobe(const char data) {
-        I2CDev::write(data | En | LCD_BACKLIGHT);
+        dev.write(data | En | LCD_BACKLIGHT);
         sleep_ms(5);
-        I2CDev::write(((data & ~En) | LCD_BACKLIGHT));
+        dev.write(((data & ~En) | LCD_BACKLIGHT));
         sleep_ms(1);
     }
 
@@ -133,7 +134,7 @@ class Display : protected I2CDev {
     }
 
     void setBacklight(const bool state) {
-        I2CDev::write(state ? LCD_BACKLIGHT : LCD_NOBACKLIGHT);
+        dev.write(state ? LCD_BACKLIGHT : LCD_NOBACKLIGHT);
         sleep_ms(10);
     }
 
@@ -153,9 +154,7 @@ class Display : protected I2CDev {
            write(0xD4);
 
         for(const char& c : text) {
-            std::cout << c;
            write(c, Rs);
-           std::cout << std::endl;
         }
 
     }
