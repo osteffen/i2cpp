@@ -7,6 +7,15 @@
 #include <stdexcept>
 #include <string>
 
+
+#include <chrono>
+#include <thread>
+
+
+void sleep_ms(const int ms) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+}
+
 class I2CDev {
 public:
     struct DeviceSpec {
@@ -35,6 +44,7 @@ public:
 
     void write(const char data) {
         ::write(file, &data, sizeof (char));
+        sleep_ms(1);
     }
 
 protected:
@@ -88,7 +98,10 @@ protected:
 
 class Display : protected I2CDev {
     public:
-    using I2CDev::I2CDev;
+
+    Display(const I2CDev::DeviceSpec& s):I2CDev(s) {
+        Init();
+    }
 
     void write(const char data, const char mode=0) {
         write4bit(mode | (data & 0xF0));
@@ -96,12 +109,15 @@ class Display : protected I2CDev {
     }
 
     void write4bit(const char data) {
-        I2CDev::write(data | En | LCD_BACKLIGHT);
+        I2CDev::write(data | LCD_BACKLIGHT);
         strobe(data);
     }
+
     void strobe(const char data) {
         I2CDev::write(data | En | LCD_BACKLIGHT);
+        sleep_ms(5);
         I2CDev::write(((data & ~En) | LCD_BACKLIGHT));
+        sleep_ms(1);
     }
 
     void Init() {
@@ -117,7 +133,8 @@ class Display : protected I2CDev {
     }
 
     void setBacklight(const bool state) {
-        write(state ? LCD_BACKLIGHT : LCD_NOBACKLIGHT);
+        I2CDev::write(state ? LCD_BACKLIGHT : LCD_NOBACKLIGHT);
+        sleep_ms(10);
     }
 
     void clear() {
@@ -135,8 +152,11 @@ class Display : protected I2CDev {
         if(line == 4)
            write(0xD4);
 
-        for(const char& c : text)
+        for(const char& c : text) {
+            std::cout << c;
            write(c, Rs);
+           std::cout << std::endl;
+        }
 
     }
 };
@@ -146,6 +166,7 @@ int main()
     Display display({1,0x27});
     display.setBacklight(true);
     display.display_string("hi!", 1);
-
+    sleep_ms(1000);
+    display.setBacklight(false);
     return 0;
 }
